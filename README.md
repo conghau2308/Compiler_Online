@@ -2,6 +2,15 @@
 
 **Nên tạo dự án cho riêng mình và ghi vào CV nha theo từng bước + mở rộng thêm**
 
+## Mục lục
+
+- [1. CS Compiler](#1--cs-compiler)
+- [2. CS Compiler Backend API](#2--cs-compiler-backend-api)
+- [3. Docker & CI/CD](#3--docker--cicd)
+- [4. Deploy lên Azure](#4--deploy-lên-azure)
+- [5. Hiện thực UI](#5--hiện-thực-ui)
+- [6. Hiện thực Proxy và Cache dùng nginx](#6--hiện-thực-proxy-và-cache-dùng-nginx)
+
 ## 1. 🚀 CS Compiler
 
 Dự án này triển khai một trình biên dịch (compiler) cho **ngôn ngữ CS**, được phát triển dựa trên bài tập lớn trong môn PPL1.
@@ -217,6 +226,11 @@ cs-api        | INFO:     1.54.5.34:15710 - "GET /openapi.json HTTP/1.1" 200 OK
 | `SSH_PRIVATE_KEY` | nội dung file `id_rsa` |
 
 
+## 5. 🚀 Hiện thực UI
+
+---
+
+## 6. 🚀 Hiện thực Proxy và Cache dùng nginx
 
 --- 
 
