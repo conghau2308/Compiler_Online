@@ -9,7 +9,7 @@ class NewErrorListener(ConsoleErrorListener):
     INSTANCE = None
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        text = getattr(offendingSymbol, 'text', str(offendingSymbol))
+        text = getattr(offendingSymbol, "text", str(offendingSymbol))
         raise SyntaxException(f"Error on line {line} col {column}: {text}")
 
 NewErrorListener.INSTANCE = NewErrorListener()
