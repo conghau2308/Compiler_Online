@@ -12,8 +12,10 @@ BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_CODE = """
 // ------------ Program --------------
-const  a = 2;
-const b = 3 + a;
-print(a + b);
+void main() {
+    int a = 2;
+    auto b = 3 + a;
+    printInt(a + b);
+}
 // ------------------------------------
 """

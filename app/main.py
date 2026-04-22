@@ -6,7 +6,7 @@ app = FastAPI(title="CS COMPLIER AZURE")
 
 # --- BẮT ĐẦU CẤU HÌNH CORS ---
 origins = [
-    "http://localhost:3000",        # Dành cho Next.js chạy ở máy tính của bạn
+    "https://frontend-compiler-beta.vercel.app/",
 ]
 
 app.add_middleware(

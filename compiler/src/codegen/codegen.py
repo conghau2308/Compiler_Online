@@ -198,7 +198,6 @@ class CodeGenerator(ASTVisitor):
 
         func_env = self._child_env(o)
 
-        # Reserve slots for parameters
         if is_main:
             self.frame.get_new_index()  # args[]
         else:
@@ -206,17 +205,17 @@ class CodeGenerator(ASTVisitor):
                 idx = self.frame.get_new_index()
                 func_env["vars"][param.name] = VarInfo(idx, param.param_type)
 
-        # Visit body
+        # Visit body - thu thập bytecode
         for stmt in node.body.statements:
             self.visit(stmt, func_env)
 
-        # Ensure every path ends with a return
+        # Emit return cho void
         if isinstance(node.return_type, VoidType) or node.return_type is None:
             self.emit.print_out(self.emit.emit_return())
 
+        # emit_end_method xuất .limit stack, .limit locals, .end method
         self.emit.print_out(self.emit.emit_end_method(self.frame))
         self.frame.exit_scope()
-        return []
 
     def visit_param(self, node: "Param", o: Any = None):
         pass  # handled in visit_func_decl
@@ -395,7 +394,13 @@ class CodeGenerator(ASTVisitor):
             self.emit.print_out(self.emit.emit_return())
         else:
             typ = self._visit_expr(node.expr, o)
-            if isinstance(typ, FloatType):
+            # Nếu đang trong hàm main → luôn dùng return (void)
+            if self.frame.name == "main":
+                if typ is not None and not isinstance(typ, VoidType):
+                    self.frame.pop()
+                    self.emit.print_out("\tpop\n")   # discard return value
+                self.emit.print_out(self.emit.emit_return())
+            elif isinstance(typ, FloatType):
                 self.frame.pop()
                 self.emit.print_out("\tfreturn\n")
             elif isinstance(typ, StringType):
@@ -635,14 +640,13 @@ class CodeGenerator(ASTVisitor):
         return VoidType()
 
     def _emit_builtin(self, node: "FuncCall", o: dict):
-        """Emit calls for built-in read/print functions. Returns type or None."""
         builtins = {
-            "printInt":    ("io/writeInt",    "(I)V",                   VoidType()),
-            "printFloat":  ("io/writeFloat",  "(F)V",                   VoidType()),
-            "printString": ("io/writeString", "(Ljava/lang/String;)V",  VoidType()),
-            "readInt":     ("io/readInt",     "()I",                    IntType()),
-            "readFloat":   ("io/readFloat",   "()F",                    FloatType()),
-            "readString":  ("io/readString",  "()Ljava/lang/String;",   StringType()),
+            "printInt":    ("io/print", "(I)V",                  VoidType()),
+            "printFloat":  ("io/print", "(F)V",                  VoidType()),
+            "printString": ("io/print", "(Ljava/lang/String;)V", VoidType()),
+            "readInt":     ("io/readInt",    "()I",                   IntType()),
+            "readFloat":   ("io/readFloat",  "()F",                   FloatType()),
+            "readString":  ("io/readString", "()Ljava/lang/String;",  StringType()),
         }
         if node.name not in builtins:
             return None
