@@ -5,7 +5,7 @@
 .method public static main([Ljava/lang/String;)V
 	iconst_2
 	istore_1
-	iconst_4
+	iconst_3
 	iload_1
 	iadd
 	istore_2

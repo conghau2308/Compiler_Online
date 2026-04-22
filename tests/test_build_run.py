@@ -40,7 +40,7 @@ def test_run_success1(client):
 
     assert r.status_code == 200
     # Cập nhật: File build thất bại từ trước nên không có file để chạy
-    assert "Build file not found" == r.json()
+    assert "7\n" == r.json()
 
 def test_run_success2(client):
 
