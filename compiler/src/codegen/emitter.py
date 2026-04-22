@@ -66,7 +66,7 @@ class Emitter:
         result = list()
         result.append(self.jvm.emitSOURCE(name + ".java"))
         result.append(self.jvm.emitCLASS("public " + name))
-        result.append(self.jvm.emitSUPER("java/land/Object" if parent == "" else parent))
+        result.append(self.jvm.emitSUPER("java/lang/Object" if parent == "" else parent))  # fix: land → lang
         return "".join(result)
 
     def emit_epilog(self) -> None:

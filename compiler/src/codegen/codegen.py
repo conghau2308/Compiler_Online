@@ -149,7 +149,6 @@ class CodeGenerator(ASTVisitor):
             if isinstance(decl, StructDecl):
                 self.visit_struct_decl(decl, env)
             elif isinstance(decl, FuncDecl):
-                # Register function signature before visiting body
                 desc = self._jvm_descriptor(decl.params, decl.return_type)
                 env["funcs"][decl.name] = FuncInfo(desc, decl.return_type)
 
@@ -158,19 +157,16 @@ class CodeGenerator(ASTVisitor):
             if isinstance(decl, FuncDecl):
                 self.visit_func_decl(decl, env)
 
-        # Constructor
-        ctor_frame = Frame("<init>")
+        # Constructor - emit thẳng, không dùng Frame
         self.emit.print_out(
             self.emit.emit_method(lexeme="<init>", in_type="()V", is_static=False)
         )
-        ctor_frame.enter_scope()
-        self.emit.print_out(
-            self.emit.emit_read_var(IntType(), ctor_frame.get_new_index(), ctor_frame)
-        )
-        self.emit.print_out(self.emit.emit_invoke_special(ctor_frame))
-        self.emit.print_out(self.emit.emit_return())
-        self.emit.print_out(self.emit.emit_end_method(ctor_frame))
-        ctor_frame.exit_scope()
+        self.emit.print_out("\t.limit stack 1\n")
+        self.emit.print_out("\t.limit locals 1\n")
+        self.emit.print_out("\taload_0\n")
+        self.emit.print_out("\tinvokespecial java/lang/Object/<init>()V\n")
+        self.emit.print_out("\treturn\n")
+        self.emit.print_out(".end method\n")
 
         self.emit.emit_epilog()
 
