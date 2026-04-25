@@ -6,8 +6,7 @@ app = FastAPI(title="CS COMPLIER AZURE")
 
 # --- BẮT ĐẦU CẤU HÌNH CORS ---
 origins = [
-    "https://frontend-compiler-beta.vercel.app",  # Bỏ trailing slash
-    "https://cs-compiler-api.vooconghau2604.workers.dev",             # Thêm domain Worker nếu gọi trực tiếp
+    "https://frontend-compiler-beta.vercel.app",
 ]
 
 app.add_middleware(
