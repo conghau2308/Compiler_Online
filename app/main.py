@@ -11,8 +11,11 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # test trước
-    allow_credentials=False,  # phải False khi dùng wildcard
+    allow_origins=[
+        "https://frontend-compiler-beta.vercel.app",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
