@@ -14,7 +14,7 @@ DEFAULT_CODE = """
 // ------------ Program --------------
 void main() {
     int a = 2;
-    auto b = 3 + a;
+    auto b = 4 + a;
     printInt(a + b);
 }
 // ------------------------------------
