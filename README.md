@@ -1,117 +1,214 @@
-# Compiler Online
+# CS Compiler
 
-**Nên tạo dự án cho riêng mình và ghi vào CV nha theo từng bước + mở rộng thêm**
+A compiler for the **CS** (Type-See) programming language, developed as part of the PPL course.
+CS is a simple C-like language featuring a complete type inference system, strict type checking, and procedural programming constructs.
 
-## Mục lục
+---
 
-- [1. CS Compiler](#1--cs-compiler)
-- [2. CS Compiler Backend API](#2--cs-compiler-backend-api)
-- [3. Docker & CI/CD](#3--docker--cicd)
-- [4. Deploy lên Azure](#4--deploy-lên-azure)
-- [5. Hiện thực UI](#5--hiện-thực-ui)
-- [6. Hiện thực Proxy và Cache dùng nginx](#6--hiện-thực-proxy-và-cache-dùng-nginx)
+## Table of Contents
 
-## 1. 🚀 CS Compiler
+- [1. CS Language Overview](#1--cs-language-overview)
+- [2. Compiler Architecture](#2--compiler-architecture)
+- [3. Backend API](#3--backend-api)
+- [4. Docker & CI/CD](#4--docker--cicd)
+- [5. Deploy to Azure](#5--deploy-to-azure)
+- [6. UI](#6--ui)
+- [7. Proxy & Cache with Nginx](#7--proxy--cache-with-nginx)
 
-Dự án này triển khai một trình biên dịch (compiler) cho **ngôn ngữ CS**, được phát triển dựa trên bài tập lớn trong môn PPL1.
+---
 
-**Compiler sẽ:**
-- 📥 Đọc file nguồn .cs
-- ⚙️ Biên dịch thành bytecode .class
-- ▶️ Chạy chương trình bằng Java Virtual Machine (JVM)
+## 1. 🚀 CS Language Overview
 
-**🧱 Kiến trúc tổng quan**
+**CS** (pronounced "type-see") is a simple C-like programming language designed for students practicing compiler implementation. It features:
+
+- Complete **type inference** using `auto`
+- Strict **type checking** with well-defined operator rules
+- Procedural constructs: functions, variables, control flow (`if`, `while`, `for`, `switch-case`)
+- Composite types via `struct`
+- Built-in I/O functions
+
+### Supported Types
+
+| Type | Description |
+|------|-------------|
+| `int` | Integer numbers |
+| `float` | Floating-point numbers |
+| `string` | String values |
+| `void` | No return value |
+| `auto` | Type inferred by compiler |
+| `struct` | User-defined composite types |
+
+### Keywords
+
+`auto` `break` `case` `continue` `default` `else` `float` `for` `if` `int` `return` `string` `struct` `switch` `void` `while`
+
+### Operators
+
+| Operator | Meaning | Applicable Type |
+|----------|---------|-----------------|
+| `+` `-` `*` `/` | Arithmetic | `int`, `float` |
+| `%` | Modulus | `int` only |
+| `==` `!=` `<` `>` `<=` `>=` | Comparison | `int`, `float` |
+| `&&` `\|\|` `!` | Logical | `int` only |
+| `++` `--` | Increment / Decrement | `int` only |
+| `=` | Assignment | any |
+| `.` | Member access | `struct` |
+
+### Built-in I/O Functions
+
+```cs
+int readInt();
+float readFloat();
+string readString();
+void printInt(int value);
+void printFloat(float value);
+void printString(string value);
+```
+
+### Example Programs
+
+**Hello World:**
+```cs
+void main() {
+    printString("Hello, World!");
+}
+```
+
+**Factorial (with type inference):**
+```cs
+int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+void main() {
+    auto num = readInt();
+    auto result = factorial(num);
+    printInt(result);
+}
+```
+
+**Struct usage:**
+```cs
+struct Point {
+    int x;
+    int y;
+};
+
+void main() {
+    Point p = {10, 20};
+    printInt(p.x);
+    printInt(p.y);
+}
+```
+
+---
+
+## 2. 🚀 Compiler Architecture
+
+The compiler is implemented in **Python** and compiles `.cs` source files into **Java bytecode** (`.class`), which is then executed on the JVM.
+
 ```
 .cs source code
       ↓
-  Compiler (Python)
+  Lexer (Tokenization)
       ↓
- .class (Java bytecode)
+  Parser (AST Generation)
+      ↓
+  Semantic Analysis (Type Checking & Type Inference)
+      ↓
+  Code Generation (Java bytecode .class)
       ↓
      JVM (java)
       ↓
    Output
 ```
 
-**📝 Ví dụ chương trình CS**
-```
-// ------------ Program --------------
-const a = 2;
-const b = 3 + a;
-print(a + b);
-// ------------------------------------
+### Compiler Phases
+
+**Lexer** — Tokenizes the source file. Recognizes keywords, identifiers, operators, literals (int, float, string), separators, and comments (line `//` and block `/* */`).
+
+**Parser** — Builds an Abstract Syntax Tree (AST) from the token stream using an ANTLR4 grammar (`CS.g4`).
+
+**Semantic Analysis** — Performs type checking and type inference. Validates operator applicability, resolves `auto` types, checks function signatures, and enforces scope rules.
+
+**Code Generation** — Emits Java bytecode (`.class`) that runs on the JVM.
+
+### Running the Compiler
+
+```bash
+python3 run.py main.cs
 ```
 
-**▶️ Cách chạy**
+Then execute the compiled output:
+
+```bash
+cd src/runtime && java CS
 ```
-➜  compiler# python3 run.py main.cs 
-/Backend/compiler/src/runtime
+
+**Full example:**
+```bash
+➜  compiler# python3 run.py main.cs
 Compile success
-➜  compiler# (cd src/runtime && java CS)            
-7
+➜  compiler# cd src/runtime && java CS
+Hello, World!
 ```
 
 ---
 
-## 2. 🚀 CS Compiler Backend API
+## 3. 🚀 Backend API
 
-**Backend cung cấp API để:**
-- Quản lý file source code
-- Biên dịch (build) chương trình
-- Chạy chương trình
-- Chỉnh sửa nội dung file
+The backend provides a REST API (built with **FastAPI**) to manage, compile, and run CS source files.
 
-**📂 API Endpoints**
-* `GET /files/` → Lấy danh sách file
-* `POST /files/create` → Tạo file mới
-* `GET /files/run` → Chạy chương trình
-* `GET /files/{filename}` → Đọc file
-* `DELETE /files/{filename}` → Xóa file
-* `POST /files/edit/{filename}` → Sửa nội dung file
-* `POST /files/build/{filename}` → Build (compile) file
+### Endpoints
 
-![alt text](images/api.png)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/files/` | List all source files |
+| `POST` | `/files/create` | Create a new source file |
+| `GET` | `/files/{filename}` | Read file content |
+| `POST` | `/files/edit/{filename}` | Edit file content |
+| `DELETE` | `/files/{filename}` | Delete a file |
+| `POST` | `/files/build/{filename}` | Compile (build) a file |
+| `GET` | `/files/run` | Run the compiled program |
 
-Dưới đây là phiên bản README **ngắn gọn, rõ ràng** cho phần Docker + CI/CD:
+Interactive API docs available at: `http://<host>/docs`
 
 ---
 
-## 3. 🚀 Docker & CI/CD
+## 4. 🚀 Docker & CI/CD
 
-### 🐳 Docker
+### Docker
 
-**Chạy bằng Docker Compose**
+Run with Docker Compose:
+
+```bash
+docker compose up --build production
+```
+
+Run tests:
 
 ```bash
 docker compose up --build test
 ```
 
----
+### Dockerfile Overview
 
-### 📦 Dockerfile
+- Base image: `python:3.11-slim`
+- Additional packages: `openjdk-21`, `build-essential`
+- Dependencies installed from `requirements.txt`
+- Entry point: `python run.py`
 
-* Base image: `python:3.11-slim`
-* Cài thêm:
+### CI/CD (GitHub Actions)
 
-  * `openjdk-21`
-  * `build-essential`
-* Cài dependencies từ `requirements.txt`
-* Run app bằng:
+Triggered on every push to the `main` branch:
 
-```bash
-python run.py
-```
-
----
-
-### 🔄 CI/CD (GitHub Actions)
-
-* Trigger khi push vào branch `main`
-* Tự động:
-
-  1. Checkout code
-  2. Build Docker
-  3. Run test (`pytest`)
+1. Checkout code
+2. Build Docker image
+3. Run test suite (`pytest`)
 
 ```yaml
 docker compose build
@@ -120,134 +217,105 @@ docker compose run --rm test
 
 ---
 
-## 4. 🚀 Deploy lên Azure
+## 5. 🚀 Deploy to Azure
 
-### 🧾 Bước 1: Đăng ký
+### Step 1: Register
 
-Đăng ký tài khoản Azure (có thể dùng mail trường để được free credits)
+Sign up for an Azure account (use your university email for free credits).
 
-### 🖥️ Bước 2: Tạo server
+### Step 2: Create a VM
 
-- Tạo VM (Ubuntu) https://portal.azure.com/#create/canonical.ubuntu-24_04-lts
-- Chọn `Ed25519 SSH Format` và Mở port 80 443 22
-![alt text](images/azure.png)
-- Tải về SSH key `cs-complier_key.pem` để truy cập
-```
------BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjfAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtz
-......................
------END OPENSSH PRIVATE KEY-----
-```
+- Create an Ubuntu VM at https://portal.azure.com
+- Choose `Ed25519 SSH Format`
+- Open ports: `80`, `443`, `22`
+- Download the SSH key `cs-compiler_key.pem`
 
-### 🔐 Bước 3: Kết nối server & Cài Docker & chạy project
+### Step 3: Connect & Install Docker
 
-- Truy cập VN mới tạo lấy ra `Public IP address`
-- Dùng lệnh kết nôi `ssh -i <duong_dan_key.pem> <username>@<ip>`
-```
-➜  Backend git:(main) ✗ ssh -i cs-complier_key.pem azureuser@50.11.17.98
-Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.14.0-1017-azure x86_64)
-azureuser@cs-compiler:~$ 
-```
-- Cài Docker & chạy project
-```sh
+```bash
+ssh -i cs-compiler_key.pem azureuser@<YOUR_PUBLIC_IP>
+
 sudo apt update
-sudo apt install -y docker.io
-sudo apt  install docker-compose 
-azureuser@cs-compiler:~$ docker --version
-Docker version 27.5.1, build 27.5.1-0ubuntu3~24.04.2
+sudo apt install -y docker.io docker-compose
 ```
 
-### 🐳 Bước 4: Clone code & chạy thử
+### Step 4: Clone & Run
 
-- 🔑 Tạo SSH key trên server
+Generate an SSH key on the server and add it to GitHub, then:
 
-```
-ssh-keygen -t rsa -b 4096 -C "votinen10cham@gmail.com"
-azureuser@cs-compiler:~$ cat ~/.ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCOgkJpWEwKlDq/Rjth1dSz8R20cMJN4NHZ2XHXK+9
-```
-![alt text](images/SHHKEY.png)
-
-- Clone dự án về  
-```
-azureuser@cs-compiler:~$ git clone git@github.com:PPL-BK/Backend_Complier.git
-Cloning into 'Backend_Complier'...
-The authenticity of host 'github.com (20.205.243.166)' can't be established.
-ED25519 key fingerprint is SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU.
-This key is not known by any other names.
-Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added 'github.com' (ED25519) to the list of known hosts.
-remote: Enumerating objects: 57, done.
-remote: Counting objects: 100% (57/57), done.
-remote: Compressing objects: 100% (48/48), done.
-remote: Total 57 (delta 1), reused 57 (delta 1), pack-reused 0 (from 0)
-Receiving objects: 100% (57/57), 207.89 KiB | 321.00 KiB/s, done.
-Resolving deltas: 100% (1/1), done.
-azureuser@cs-compiler:~$ ls
-Backend_Complier
-azureuser@cs-compiler:~$ cd Backend_Complier/
-azureuser@cs-compiler:~/Backend_Complier$ ls
-Dockerfile  README.md  app  compiler  docker-compose.yml  images  requirements.txt  run.py  tests
-```
-- Chạy thử
-
-```
-azureuser@cs-compiler:~/Backend_Complier$ sudo docker-compose up --build production
-Step 8/8 : CMD ["python", "run.py"]
- ---> Running in 1e04b4e36700
- ---> Removed intermediate container 1e04b4e36700
- ---> 1ade8e0b3ee6
-Successfully built 1ade8e0b3ee6
-Successfully tagged backend_complier_production:latest
-Creating cs-api ... done
-Attaching to cs-api
-cs-api        | INFO:     Will watch for changes in these directories: ['/app']
-cs-api        | INFO:     Uvicorn running on http://0.0.0.0:9000 (Press CTRL+C to quit)
-cs-api        | INFO:     Started reloader process [1] using StatReload
-cs-api        | INFO:     Started server process [8]
-cs-api        | INFO:     Waiting for application startup.
-cs-api        | INFO:     Application startup complete.
-cs-api        | INFO:     1.54.5.34:15710 - "GET /docs HTTP/1.1" 200 OK
-cs-api        | INFO:     1.54.5.34:15710 - "GET /openapi.json HTTP/1.1" 200 OK
-
+```bash
+git clone git@github.com:<your-org>/cs-compiler.git
+cd cs-compiler
+sudo docker-compose up --build production
 ```
 
-- Truy cập http://50.11.17.98/docs#/
+Access the API docs at: `http://<YOUR_PUBLIC_IP>/docs`
 
+### Step 5: Configure CD with GitHub Actions
 
-### 🔄 Bước 5: Cấu hình CD với GitHub Actions
+Add the following secrets in `Repo → Settings → Secrets → Actions`:
 
-- Cấu hình Secrets trên GitHub `Repo → Settings → Secrets → Actions`
-
-| Tên               | Giá trị                |
-| ----------------- | ---------------------- |
-| `SERVER_IP`       | IP Azure VM            |
-| `SERVER_USER`     | `azureuser`            |
-| `SSH_PRIVATE_KEY` | nội dung file `id_rsa` |
-
-
-## 5. 🚀 Hiện thực UI
+| Secret | Value |
+|--------|-------|
+| `SERVER_IP` | Azure VM public IP |
+| `SERVER_USER` | `azureuser` |
+| `SSH_PRIVATE_KEY` | Content of your private key |
 
 ---
 
-## 6. 🚀 Hiện thực Proxy và Cache dùng nginx
+## 6. 🚀 UI — Online Compiler
 
---- 
+Giao diện web compiler được build bằng **Monaco Editor** (engine của VS Code),
+cho phép viết, build và chạy chương trình TyC trực tiếp trên trình duyệt.
+
+🌐 **Live Demo:** [https://frontend-compiler-beta.vercel.app](https://frontend-compiler-beta.vercel.app)
+
+![TyC Compiler UI](images/UI.png)
+
+### Tính năng
+
+| Tính năng | Mô tả |
+|-----------|-------|
+| 📝 Monaco Editor | Trình soạn thảo code với syntax highlighting |
+| 📁 File Explorer | Tạo, lưu, quản lý nhiều file `.tyc` |
+| ⚙️ Build | Biên dịch file TyC sang Java bytecode |
+| ▶️ Run | Chạy chương trình và xem output trực tiếp |
+| 🖥️ Output Panel | Hiển thị kết quả và lỗi biên dịch |
+
+### Hướng dẫn sử dụng
+
+1. Truy cập [https://frontend-compiler-beta.vercel.app](https://frontend-compiler-beta.vercel.app)
+2. Nhấn **New File** để tạo file `.tyc` mới
+3. Viết code TyC trong editor
+4. Nhấn **Build** để biên dịch
+5. Nhấn **Run** để chạy và xem kết quả ở panel Output
+
+### Tech Stack
+
+- **Framework:** React / Next.js
+- **Editor:** Monaco Editor
+- **Deploy:** Vercel
+
+## Project Structure
+
+```
+cs-compiler/
+├── compiler/          # CS compiler source (Python + ANTLR4)
+│   └── CS.g4         # ANTLR4 grammar file
+├── app/               # FastAPI backend
+├── tests/             # Test suite (pytest)
+├── src/
+│   └── runtime/       # Compiled .class output directory
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── run.py             # Entry point
+```
+
+---
 
 <p align="center">
-  <a href="https://www.facebook.com/Shiba.Vo.Tien">
-    <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook"/>
-  </a>
-  <a href="https://www.tiktok.com/@votien_shiba">
-    <img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok"/>
-  </a>
-  <a href="https://www.facebook.com/groups/khmt.ktmt.cse.bku?locale=vi_VN">
-    <img src="https://img.shields.io/badge/Facebook%20Group-4267B2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook Group"/>
-  </a>
-  <a href="https://www.facebook.com/CODE.MT.BK">
-    <img src="https://img.shields.io/badge/Page%20CODE.MT.BK-0057FF?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook Page"/>
-  </a>
-  <a href="https://github.com/VoTienBKU">
+  <a href="https://github.com/conghau2308/Compiler_Online.git">
     <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
   </a>
 </p>
