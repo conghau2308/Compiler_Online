@@ -82,3 +82,6 @@ coverage.xml
 .python-version
 
 cs-complier_key.pem
+
+compiler/src/runtime/*.class
+compiler/src/runtime/*.j

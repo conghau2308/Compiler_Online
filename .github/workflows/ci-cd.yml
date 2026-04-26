@@ -33,6 +33,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd Complier_Online
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             sudo docker-compose down
             sudo docker-compose up -d --build production
